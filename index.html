@@ -54,6 +54,24 @@
     font-size: 16px;
   }
   input:focus { outline: none; border-color: #ff7a18; }
+  .password-wrap { position: relative; }
+  .password-wrap input { padding-left: 42px; }
+  .eye-btn {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: auto;
+    padding: 0;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    margin-top: 0;
+  }
+  .eye-btn:hover { color: #ff7a18; }
   button {
     width: 100%;
     padding: 13px;
@@ -114,7 +132,10 @@
     <input type="text" id="login-username" autocomplete="username">
 
     <label for="login-password">סיסמה</label>
-    <input type="password" id="login-password" autocomplete="current-password">
+    <div class="password-wrap">
+      <input type="password" id="login-password" autocomplete="current-password">
+      <button type="button" class="eye-btn" onclick="togglePassword('login-password', this)" tabindex="-1">👁</button>
+    </div>
 
     <div class="error" id="login-error"></div>
 
@@ -127,10 +148,16 @@
     <div class="subtitle">זו כניסה ראשונה — בחר סיסמה קבועה</div>
 
     <label for="new-password">סיסמה חדשה (8 תווים לפחות)</label>
-    <input type="password" id="new-password">
+    <div class="password-wrap">
+      <input type="password" id="new-password">
+      <button type="button" class="eye-btn" onclick="togglePassword('new-password', this)" tabindex="-1">👁</button>
+    </div>
 
     <label for="confirm-password">אימות סיסמה</label>
-    <input type="password" id="confirm-password">
+    <div class="password-wrap">
+      <input type="password" id="confirm-password">
+      <button type="button" class="eye-btn" onclick="togglePassword('confirm-password', this)" tabindex="-1">👁</button>
+    </div>
 
     <div class="error" id="change-error"></div>
 
@@ -278,6 +305,17 @@ function fallbackToPasswordLogin() {
 }
 
 // ── Auth flow ──────────────────────────────────────────────
+
+function togglePassword(id, btn) {
+  const input = document.getElementById(id);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁';
+  }
+}
 
 async function doLogin() {
   const username = document.getElementById('login-username').value.trim();
