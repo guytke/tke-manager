@@ -5,11 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>TKE Manager</title>
 <style>
+  :root {
+    --accent: #7F77DD;
+    --accent-hover: #6a62c4;
+    --bg: #111111;
+    --card: #1a1a1a;
+    --border: #2a2a2a;
+    --nav-active-bg: #222222;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     font-family: 'Segoe UI', Arial, sans-serif;
-    background: #0a0a0f;
+    background: var(--bg);
     color: #f0f0f0;
     min-height: 100vh;
   }
@@ -24,8 +33,8 @@
   }
 
   .card {
-    background: #16161f;
-    border: 1px solid #2a2a3a;
+    background: var(--card);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 32px 24px;
     width: 100%;
@@ -37,7 +46,7 @@
     font-size: 24px;
     font-weight: 700;
     margin-bottom: 4px;
-    color: #ff7a18;
+    color: var(--accent);
   }
 
   .subtitle {
@@ -59,13 +68,13 @@
     width: 100%;
     padding: 12px 14px;
     border-radius: 10px;
-    border: 1px solid #2a2a3a;
-    background: #0a0a0f;
+    border: 1px solid var(--border);
+    background: var(--bg);
     color: #fff;
     font-size: 16px;
   }
 
-  input:focus { outline: none; border-color: #ff7a18; }
+  input:focus { outline: none; border-color: var(--accent); }
 
   .password-wrap { position: relative; }
   .password-wrap input { padding-left: 42px; }
@@ -83,7 +92,7 @@
     cursor: pointer;
     line-height: 1;
   }
-  .eye-btn:hover { color: #ff7a18; }
+  .eye-btn:hover { color: var(--accent); }
 
   .error {
     color: #ff4444;
@@ -103,56 +112,56 @@
     padding: 13px;
     border-radius: 10px;
     border: none;
-    background: #ff7a18;
+    background: var(--accent);
     color: #fff;
     font-size: 16px;
     font-weight: 600;
     margin-top: 20px;
     transition: background 0.2s;
   }
-  .btn-primary:hover { background: #e06010; }
-  .btn-primary:disabled { background: #555; cursor: not-allowed; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { background: #444; cursor: not-allowed; }
 
   .btn-secondary {
     padding: 8px 16px;
     border-radius: 8px;
-    border: 1px solid #2a2a3a;
-    background: #1e1e2a;
+    border: 1px solid var(--border);
+    background: #222;
     color: #ccc;
     font-size: 14px;
     transition: background 0.2s;
   }
-  .btn-secondary:hover { background: #2a2a3a; }
+  .btn-secondary:hover { background: #2a2a2a; }
 
   .btn-danger {
     padding: 8px 16px;
     border-radius: 8px;
     border: none;
-    background: #3a1010;
+    background: #2a1010;
     color: #ff6666;
     font-size: 14px;
     transition: background 0.2s;
   }
-  .btn-danger:hover { background: #5a1a1a; }
+  .btn-danger:hover { background: #3a1818; }
 
   .btn-success {
     padding: 8px 16px;
     border-radius: 8px;
     border: none;
-    background: #0f3a20;
+    background: #0f2a18;
     color: #44cc77;
     font-size: 14px;
     transition: background 0.2s;
   }
-  .btn-success:hover { background: #1a5a30; }
+  .btn-success:hover { background: #1a3a24; }
 
   /* ── App layout ── */
   #app-wrapper { display: none; flex-direction: column; min-height: 100vh; }
 
   /* Top Nav */
   #topnav {
-    background: #16161f;
-    border-bottom: 1px solid #2a2a3a;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -166,7 +175,7 @@
   .nav-logo {
     font-size: 18px;
     font-weight: 700;
-    color: #ff7a18;
+    color: var(--accent);
   }
 
   .nav-links {
@@ -175,18 +184,22 @@
   }
 
   .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     padding: 8px 14px;
     border-radius: 8px;
     border: none;
     background: none;
-    color: #aaa;
+    color: #888;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
   }
-  .nav-link:hover { background: #1e1e2a; color: #fff; }
-  .nav-link.active { background: #ff7a18; color: #fff; }
+  .nav-link svg { flex-shrink: 0; }
+  .nav-link:hover { background: #1e1e1e; color: #fff; }
+  .nav-link.active { background: var(--nav-active-bg); color: #fff; }
 
   .nav-user {
     display: flex;
@@ -201,13 +214,13 @@
   .btn-logout {
     padding: 6px 12px;
     border-radius: 7px;
-    border: 1px solid #2a2a3a;
+    border: 1px solid var(--border);
     background: none;
     color: #888;
     font-size: 13px;
     cursor: pointer;
   }
-  .btn-logout:hover { background: #1e1e2a; color: #fff; }
+  .btn-logout:hover { background: #222; color: #fff; }
 
   /* Content area */
   #content {
@@ -238,8 +251,8 @@
   }
 
   .stat-card {
-    background: #16161f;
-    border: 1px solid #2a2a3a;
+    background: var(--card);
+    border: 1px solid var(--border);
     border-radius: 14px;
     padding: 20px;
     text-align: center;
@@ -248,7 +261,7 @@
   .stat-card .stat-num {
     font-size: 36px;
     font-weight: 700;
-    color: #ff7a18;
+    color: var(--accent);
     line-height: 1;
     margin-bottom: 8px;
   }
@@ -259,8 +272,8 @@
   }
 
   .section-card {
-    background: #16161f;
-    border: 1px solid #2a2a3a;
+    background: var(--card);
+    border: 1px solid var(--border);
     border-radius: 14px;
     padding: 20px;
     margin-bottom: 20px;
@@ -287,17 +300,17 @@
     padding: 10px 12px;
     color: #888;
     font-weight: 600;
-    border-bottom: 1px solid #2a2a3a;
+    border-bottom: 1px solid var(--border);
   }
 
   td {
     padding: 12px 12px;
-    border-bottom: 1px solid #1e1e2a;
+    border-bottom: 1px solid #1e1e1e;
     vertical-align: middle;
   }
 
   tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #1a1a24; }
+  tr:hover td { background: #1f1f1f; }
 
   .badge {
     display: inline-block;
@@ -307,8 +320,8 @@
     font-weight: 600;
   }
 
-  .badge-active { background: #0f3a20; color: #44cc77; }
-  .badge-inactive { background: #3a1010; color: #ff6666; }
+  .badge-active { background: #0f2a18; color: #44cc77; }
+  .badge-inactive { background: #2a1010; color: #ff6666; }
 
   /* ── Technicians header ── */
   .section-header {
@@ -323,7 +336,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.75);
     z-index: 200;
     align-items: center;
     justify-content: center;
@@ -333,8 +346,8 @@
   .modal-overlay.open { display: flex; }
 
   .modal {
-    background: #16161f;
-    border: 1px solid #2a2a3a;
+    background: var(--card);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 28px 24px;
     width: 100%;
@@ -361,8 +374,8 @@
     bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
-    background: #1e1e2a;
-    border: 1px solid #2a2a3a;
+    background: #222;
+    border: 1px solid var(--border);
     color: #fff;
     padding: 12px 24px;
     border-radius: 10px;
@@ -393,6 +406,7 @@
 
   @media (max-width: 600px) {
     .nav-links .nav-link { padding: 8px 10px; font-size: 13px; }
+    .nav-link span.nav-label { display: none; }
     #content { padding: 16px; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
   }
@@ -445,10 +459,22 @@
   <nav id="topnav">
     <div class="nav-logo">TKE Manager</div>
     <div class="nav-links">
-      <button class="nav-link active" onclick="showPage('dashboard')">🏠 בית</button>
-      <button class="nav-link" onclick="showPage('technicians')">👷 טכנאים</button>
-      <button class="nav-link" onclick="showPage('faults')">🔧 תקלות</button>
-      <button class="nav-link" onclick="showPage('sites')">📍 אתרים</button>
+      <button class="nav-link active" onclick="showPage('dashboard')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span class="nav-label">בית</span>
+      </button>
+      <button class="nav-link" onclick="showPage('technicians')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span class="nav-label">טכנאים</span>
+      </button>
+      <button class="nav-link" onclick="showPage('faults')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="nav-label">תקלות</span>
+      </button>
+      <button class="nav-link" onclick="showPage('sites')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span class="nav-label">אתרים</span>
+      </button>
     </div>
     <div class="nav-user">
       <span id="nav-username"></span>
