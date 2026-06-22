@@ -6,16 +6,23 @@
 <title>TKE Manager</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
     font-family: 'Segoe UI', Arial, sans-serif;
     background: #0a0a0f;
     color: #f0f0f0;
     min-height: 100vh;
+  }
+
+  /* ── Auth screens ── */
+  #auth-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 100vh;
     padding: 20px;
   }
+
   .card {
     background: #16161f;
     border: 1px solid #2a2a3a;
@@ -24,6 +31,7 @@
     width: 100%;
     max-width: 380px;
   }
+
   .logo {
     text-align: center;
     font-size: 24px;
@@ -31,12 +39,14 @@
     margin-bottom: 4px;
     color: #ff7a18;
   }
+
   .subtitle {
     text-align: center;
     font-size: 13px;
     color: #888;
     margin-bottom: 28px;
   }
+
   label {
     display: block;
     font-size: 14px;
@@ -44,7 +54,8 @@
     margin-bottom: 6px;
     margin-top: 16px;
   }
-  input {
+
+  input[type=text], input[type=password] {
     width: 100%;
     padding: 12px 14px;
     border-radius: 10px;
@@ -53,7 +64,9 @@
     color: #fff;
     font-size: 16px;
   }
+
   input:focus { outline: none; border-color: #ff7a18; }
+
   .password-wrap { position: relative; }
   .password-wrap input { padding-left: 42px; }
   .eye-btn {
@@ -69,10 +82,23 @@
     font-size: 18px;
     cursor: pointer;
     line-height: 1;
-    margin-top: 0;
   }
   .eye-btn:hover { color: #ff7a18; }
+
+  .error {
+    color: #ff4444;
+    font-size: 13px;
+    margin-top: 10px;
+    min-height: 18px;
+  }
+
+  /* ── Buttons ── */
   button {
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .btn-primary {
     width: 100%;
     padding: 13px;
     border-radius: 10px;
@@ -81,53 +107,305 @@
     color: #fff;
     font-size: 16px;
     font-weight: 600;
-    margin-top: 24px;
+    margin-top: 20px;
+    transition: background 0.2s;
+  }
+  .btn-primary:hover { background: #e06010; }
+  .btn-primary:disabled { background: #555; cursor: not-allowed; }
+
+  .btn-secondary {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #2a2a3a;
+    background: #1e1e2a;
+    color: #ccc;
+    font-size: 14px;
+    transition: background 0.2s;
+  }
+  .btn-secondary:hover { background: #2a2a3a; }
+
+  .btn-danger {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    background: #3a1010;
+    color: #ff6666;
+    font-size: 14px;
+    transition: background 0.2s;
+  }
+  .btn-danger:hover { background: #5a1a1a; }
+
+  .btn-success {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    background: #0f3a20;
+    color: #44cc77;
+    font-size: 14px;
+    transition: background 0.2s;
+  }
+  .btn-success:hover { background: #1a5a30; }
+
+  /* ── App layout ── */
+  #app-wrapper { display: none; flex-direction: column; min-height: 100vh; }
+
+  /* Top Nav */
+  #topnav {
+    background: #16161f;
+    border-bottom: 1px solid #2a2a3a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav-logo {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ff7a18;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 4px;
+  }
+
+  .nav-link {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    background: none;
+    color: #aaa;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav-link:hover { background: #1e1e2a; color: #fff; }
+  .nav-link.active { background: #ff7a18; color: #fff; }
+
+  .nav-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: #888;
+  }
+
+  .nav-user span { color: #ccc; }
+
+  .btn-logout {
+    padding: 6px 12px;
+    border-radius: 7px;
+    border: 1px solid #2a2a3a;
+    background: none;
+    color: #888;
+    font-size: 13px;
     cursor: pointer;
   }
-  button:active { background: #e06a10; }
-  button:disabled { background: #555; cursor: not-allowed; }
-  .error {
-    background: #3a1414;
-    color: #ff8888;
-    border: 1px solid #5a2222;
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 13px;
-    margin-top: 16px;
-    display: none;
+  .btn-logout:hover { background: #1e1e2a; color: #fff; }
+
+  /* Content area */
+  #content {
+    flex: 1;
+    padding: 24px 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
   }
+
+  /* Screen visibility */
   .screen { display: none; }
   .screen.active { display: block; }
-  .welcome { text-align: center; }
-  .welcome h2 { margin-bottom: 8px; }
-  .welcome p { color: #888; font-size: 14px; margin-bottom: 24px; }
-  .logout-btn {
-    background: transparent;
-    border: 1px solid #2a2a3a;
-    color: #ccc;
-    margin-top: 12px;
+
+  /* ── Dashboard ── */
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #fff;
   }
-  .secondary-btn {
-    background: transparent;
-    border: 1px solid #2a2a3a;
-    color: #ccc;
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
   }
-  .fingerprint-icon {
-    font-size: 56px;
+
+  .stat-card {
+    background: #16161f;
+    border: 1px solid #2a2a3a;
+    border-radius: 14px;
+    padding: 20px;
     text-align: center;
+  }
+
+  .stat-card .stat-num {
+    font-size: 36px;
+    font-weight: 700;
+    color: #ff7a18;
+    line-height: 1;
     margin-bottom: 8px;
   }
-  .center-text { text-align: center; }
+
+  .stat-card .stat-label {
+    font-size: 13px;
+    color: #888;
+  }
+
+  .section-card {
+    background: #16161f;
+    border: 1px solid #2a2a3a;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ccc;
+    margin-bottom: 16px;
+  }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  th {
+    text-align: right;
+    padding: 10px 12px;
+    color: #888;
+    font-weight: 600;
+    border-bottom: 1px solid #2a2a3a;
+  }
+
+  td {
+    padding: 12px 12px;
+    border-bottom: 1px solid #1e1e2a;
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #1a1a24; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .badge-active { background: #0f3a20; color: #44cc77; }
+  .badge-inactive { background: #3a1010; color: #ff6666; }
+
+  /* ── Technicians header ── */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: #16161f;
+    border: 1px solid #2a2a3a;
+    border-radius: 16px;
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #fff;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 24px;
+  }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e1e2a;
+    border: 1px solid #2a2a3a;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+
+  #toast.show { opacity: 1; }
+
+  /* Loading */
+  .loading {
+    text-align: center;
+    color: #555;
+    padding: 40px;
+    font-size: 14px;
+  }
+
+  /* Coming soon */
+  .coming-soon {
+    text-align: center;
+    color: #555;
+    padding: 60px 20px;
+    font-size: 16px;
+  }
+
+  @media (max-width: 600px) {
+    .nav-links .nav-link { padding: 8px 10px; font-size: 13px; }
+    #content { padding: 16px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
 </style>
 </head>
 <body>
 
-<div class="card">
-
-  <!-- מסך התחברות -->
-  <div id="screen-login" class="screen active">
+<!-- ── Auth ── -->
+<div id="auth-wrapper">
+  <div id="screen-login" class="card">
     <div class="logo">TKE Manager</div>
     <div class="subtitle">פיקוח אפליקציית שטח</div>
+
     <label for="login-username">שם משתמש</label>
     <input type="text" id="login-username" autocomplete="username">
 
@@ -138,12 +416,10 @@
     </div>
 
     <div class="error" id="login-error"></div>
-
-    <button id="login-btn" onclick="doLogin()">התחבר</button>
+    <button class="btn-primary" id="login-btn" onclick="doLogin()">התחבר</button>
   </div>
 
-  <!-- מסך שינוי סיסמה (כניסה ראשונה) -->
-  <div id="screen-change-password" class="screen">
+  <div id="screen-change-password" class="card" style="display:none;">
     <div class="logo">TKE Manager</div>
     <div class="subtitle">זו כניסה ראשונה — בחר סיסמה קבועה</div>
 
@@ -160,151 +436,150 @@
     </div>
 
     <div class="error" id="change-error"></div>
-
-    <button id="change-btn" onclick="doChangePassword()">שמור סיסמה</button>
+    <button class="btn-primary" id="change-btn" onclick="doChangePassword()">שמור סיסמה</button>
   </div>
-
-  <!-- מסך הצעה להפעלת ביומטריה -->
-  <div id="screen-enable-biometric" class="screen">
-    <div class="fingerprint-icon">👆</div>
-    <div class="logo center-text">כניסה בטביעת אצבע</div>
-    <div class="subtitle">להפעיל כניסה מהירה עם טביעת אצבע / זיהוי פנים בפעמים הבאות?</div>
-    <button onclick="enableBiometric()">כן, הפעל</button>
-    <button class="secondary-btn" onclick="declineBiometric()">לא תודה</button>
-  </div>
-
-  <!-- מסך נעילה ביומטרית (בפתיחת האפליקציה) -->
-  <div id="screen-biometric-lock" class="screen">
-    <div class="fingerprint-icon">🔒</div>
-    <div class="logo center-text">TKE Manager</div>
-    <div class="subtitle" id="lock-user-name"></div>
-    <div class="error" id="biometric-error"></div>
-    <button onclick="unlockWithBiometric()">אמת עם טביעת אצבע</button>
-    <button class="secondary-btn" onclick="fallbackToPasswordLogin()">התחבר עם סיסמה</button>
-  </div>
-
-  <!-- מסך דשבורד (שלד ראשוני) -->
-  <div id="screen-dashboard" class="screen">
-    <div class="welcome">
-      <h2 id="welcome-name"></h2>
-      <p id="welcome-region"></p>
-      <p style="color:#555;">כאן יבנה הדשבורד המלא בהמשך</p>
-      <button class="logout-btn" onclick="doLogout()">התנתק</button>
-    </div>
-  </div>
-
 </div>
 
+<!-- ── App ── -->
+<div id="app-wrapper">
+  <nav id="topnav">
+    <div class="nav-logo">TKE Manager</div>
+    <div class="nav-links">
+      <button class="nav-link active" onclick="showPage('dashboard')">🏠 בית</button>
+      <button class="nav-link" onclick="showPage('technicians')">👷 טכנאים</button>
+      <button class="nav-link" onclick="showPage('faults')">🔧 תקלות</button>
+      <button class="nav-link" onclick="showPage('sites')">📍 אתרים</button>
+    </div>
+    <div class="nav-user">
+      <span id="nav-username"></span>
+      <button class="btn-logout" onclick="doLogout()">יציאה</button>
+    </div>
+  </nav>
+
+  <div id="content">
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="screen active">
+      <div class="page-title">סקירה כללית</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-technicians">—</div>
+          <div class="stat-label">טכנאים פעילים</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-total">—</div>
+          <div class="stat-label">סה״כ טכנאים</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">—</div>
+          <div class="stat-label">תקלות פתוחות</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">—</div>
+          <div class="stat-label">אתרים</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-title">טכנאים אחרונים</div>
+        <div id="dashboard-users-list"><div class="loading">טוען...</div></div>
+      </div>
+    </div>
+
+    <!-- Technicians -->
+    <div id="page-technicians" class="screen">
+      <div class="section-header">
+        <div class="page-title" style="margin:0">ניהול טכנאים</div>
+        <button class="btn-primary" style="width:auto;margin:0;padding:10px 18px;font-size:14px" onclick="openAddModal()">+ הוסף טכנאי</button>
+      </div>
+
+      <div class="section-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>שם מלא</th>
+                <th>שם משתמש</th>
+                <th>אזור</th>
+                <th>סטטוס</th>
+                <th>כניסה אחרונה</th>
+                <th>פעולות</th>
+              </tr>
+            </thead>
+            <tbody id="tech-table-body">
+              <tr><td colspan="6" class="loading">טוען...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Faults -->
+    <div id="page-faults" class="screen">
+      <div class="page-title">תקלות</div>
+      <div class="section-card">
+        <div class="coming-soon">🔧 מודול תקלות — בקרוב</div>
+      </div>
+    </div>
+
+    <!-- Sites -->
+    <div id="page-sites" class="screen">
+      <div class="page-title">אתרים</div>
+      <div class="section-card">
+        <div class="coming-soon">📍 מודול אתרים — בקרוב</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Add/Edit Modal ── -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">הוסף טכנאי</div>
+
+    <label>שם משתמש</label>
+    <input type="text" id="modal-username" placeholder="username">
+
+    <label>שם מלא</label>
+    <input type="text" id="modal-fullname" placeholder="שם מלא">
+
+    <label>אזור</label>
+    <input type="text" id="modal-region" placeholder="צפון / מרכז / דרום...">
+
+    <div id="modal-password-section">
+      <label>סיסמה זמנית</label>
+      <input type="text" id="modal-temppass" placeholder="לפחות 6 תווים">
+    </div>
+
+    <div class="error" id="modal-error"></div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">ביטול</button>
+      <button class="btn-primary" id="modal-save-btn" style="width:auto;margin:0;padding:10px 20px" onclick="saveUser()">שמור</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
 <script>
-const API_BASE = 'https://tke-proxy.guyshtaiger.workers.dev';
+const API = 'https://tke-proxy.guyshtaiger.workers.dev';
+
+let currentToken = localStorage.getItem('tke_token') || null;
+let currentUser  = JSON.parse(localStorage.getItem('tke_user') || 'null');
+let allUsers     = [];
+let editingUserId = null;
 let pendingToken = null;
-let pendingUser = null;
 
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
+// ── Init ────────────────────────────────────────────────────
 
-function showError(elId, msg) {
-  const el = document.getElementById(elId);
-  el.textContent = msg;
-  el.style.display = 'block';
-}
-
-function hideError(elId) {
-  document.getElementById(elId).style.display = 'none';
-}
-
-// ── WebAuthn helpers ──────────────────────────────────────
-
-function bufToBase64url(buf) {
-  return btoa(String.fromCharCode(...new Uint8Array(buf)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-function base64urlToBuf(str) {
-  str = str.replace(/-/g, '+').replace(/_/g, '/');
-  while (str.length % 4) str += '=';
-  const bin = atob(str);
-  const buf = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-  return buf.buffer;
-}
-
-async function isBiometricAvailable() {
-  if (!window.PublicKeyCredential || !PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-    return false;
+window.onload = () => {
+  if (currentToken && currentUser) {
+    showApp();
   }
-  try {
-    return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-  } catch {
-    return false;
-  }
-}
+};
 
-async function enableBiometric() {
-  try {
-    const publicKey = {
-      challenge: crypto.getRandomValues(new Uint8Array(32)),
-      rp: { name: 'TKE Manager', id: location.hostname },
-      user: {
-        id: crypto.getRandomValues(new Uint8Array(16)),
-        name: pendingUser.username,
-        displayName: pendingUser.full_name || pendingUser.username,
-      },
-      pubKeyCredParams: [
-        { type: 'public-key', alg: -7 },
-        { type: 'public-key', alg: -257 },
-      ],
-      authenticatorSelection: {
-        authenticatorAttachment: 'platform',
-        userVerification: 'required',
-        residentKey: 'preferred',
-      },
-      timeout: 60000,
-      attestation: 'none',
-    };
-
-    const cred = await navigator.credentials.create({ publicKey });
-    localStorage.setItem('tke_manager_credential_id', bufToBase64url(cred.rawId));
-    finishLogin(pendingToken, pendingUser);
-  } catch (err) {
-    // אם המשתמש ביטל או שיש שגיאה — פשוט ממשיכים בלי ביומטריה
-    finishLogin(pendingToken, pendingUser);
-  }
-}
-
-function declineBiometric() {
-  localStorage.setItem('tke_manager_biometric_declined', '1');
-  finishLogin(pendingToken, pendingUser);
-}
-
-async function unlockWithBiometric() {
-  hideError('biometric-error');
-  const credId = localStorage.getItem('tke_manager_credential_id');
-  if (!credId) { fallbackToPasswordLogin(); return; }
-
-  try {
-    const publicKey = {
-      challenge: crypto.getRandomValues(new Uint8Array(32)),
-      allowCredentials: [{ id: base64urlToBuf(credId), type: 'public-key' }],
-      userVerification: 'required',
-      timeout: 60000,
-    };
-    await navigator.credentials.get({ publicKey });
-    // הצליח — מאמתים מול השרת שהטוקן השמור עדיין תקף
-    await doLoginWithToken();
-  } catch (err) {
-    showError('biometric-error', 'האימות נכשל או בוטל, נסה שוב');
-  }
-}
-
-function fallbackToPasswordLogin() {
-  localStorage.removeItem('tke_manager_token');
-  localStorage.removeItem('tke_manager_user');
-  showScreen('screen-login');
-}
-
-// ── Auth flow ──────────────────────────────────────────────
+// ── Toggle password visibility ───────────────────────────────
 
 function togglePassword(id, btn) {
   const input = document.getElementById(id);
@@ -317,44 +592,46 @@ function togglePassword(id, btn) {
   }
 }
 
+// ── Auth screens ─────────────────────────────────────────────
+
+function showAuthScreen(name) {
+  document.getElementById('screen-login').style.display = 'none';
+  document.getElementById('screen-change-password').style.display = 'none';
+  document.getElementById('screen-' + name).style.display = 'block';
+}
+
 async function doLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
-  hideError('login-error');
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
 
-  if (!username || !password) {
-    showError('login-error', 'נא למלא שם משתמש וסיסמה');
-    return;
-  }
+  if (!username || !password) { errEl.textContent = 'נא למלא שם משתמש וסיסמה'; return; }
 
   const btn = document.getElementById('login-btn');
   btn.disabled = true;
   btn.textContent = 'מתחבר...';
 
   try {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    const res = await fetch(`${API}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
     });
     const data = await res.json();
 
-    if (!res.ok) {
-      showError('login-error', data.error === 'invalid credentials' ? 'שם משתמש או סיסמה שגויים' : data.error);
-      return;
-    }
+    if (!res.ok) { errEl.textContent = data.error || 'שגיאה בהתחברות'; return; }
 
     if (data.must_change_password) {
       pendingToken = data.token;
-      pendingUser = data.user;
-      showScreen('screen-change-password');
-    } else {
-      pendingToken = data.token;
-      pendingUser = data.user;
-      await maybeOfferBiometric();
+      showAuthScreen('change-password');
+      return;
     }
-  } catch (err) {
-    showError('login-error', 'שגיאת תקשורת, נסה שוב');
+
+    setSession(data.token, data.user);
+    showApp();
+  } catch {
+    errEl.textContent = 'שגיאת רשת — נסה שוב';
   } finally {
     btn.disabled = false;
     btn.textContent = 'התחבר';
@@ -362,126 +639,267 @@ async function doLogin() {
 }
 
 async function doChangePassword() {
-  const newPass = document.getElementById('new-password').value;
+  const newPass     = document.getElementById('new-password').value;
   const confirmPass = document.getElementById('confirm-password').value;
-  hideError('change-error');
+  const errEl       = document.getElementById('change-error');
+  errEl.textContent = '';
 
-  if (newPass.length < 8) {
-    showError('change-error', 'הסיסמה חייבת להיות לפחות 8 תווים');
-    return;
-  }
-  if (newPass !== confirmPass) {
-    showError('change-error', 'הסיסמאות אינן תואמות');
-    return;
-  }
+  if (newPass.length < 8) { errEl.textContent = 'הסיסמה חייבת להכיל לפחות 8 תווים'; return; }
+  if (newPass !== confirmPass) { errEl.textContent = 'הסיסמאות אינן תואמות'; return; }
 
   const btn = document.getElementById('change-btn');
   btn.disabled = true;
-  btn.textContent = 'שומר...';
 
   try {
-    const res = await fetch(`${API_BASE}/auth/change-password`, {
+    const res = await fetch(`${API}/auth/change-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: pendingToken, new_password: newPass }),
     });
     const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || 'שגיאה'; return; }
 
-    if (!res.ok) {
-      showError('change-error', data.error);
-      return;
-    }
-
-    await maybeOfferBiometric();
-  } catch (err) {
-    showError('change-error', 'שגיאת תקשורת, נסה שוב');
+    // Re-login to get fresh token
+    const loginRes = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('login-username').value.trim(),
+        password: newPass,
+      }),
+    });
+    const loginData = await loginRes.json();
+    setSession(loginData.token, loginData.user);
+    showApp();
+  } catch {
+    errEl.textContent = 'שגיאת רשת';
   } finally {
     btn.disabled = false;
-    btn.textContent = 'שמור סיסמה';
   }
 }
 
-async function maybeOfferBiometric() {
-  const already = localStorage.getItem('tke_manager_credential_id');
-  const declined = localStorage.getItem('tke_manager_biometric_declined');
-  const available = await isBiometricAvailable();
-
-  if (!already && !declined && available) {
-    showScreen('screen-enable-biometric');
-  } else {
-    finishLogin(pendingToken, pendingUser);
-  }
-}
-
-function finishLogin(token, user) {
-  localStorage.setItem('tke_manager_token', token);
-  localStorage.setItem('tke_manager_user', JSON.stringify(user));
-  showDashboard(user);
-}
-
-async function doLoginWithToken() {
-  const token = localStorage.getItem('tke_manager_token');
-  if (!token) { showScreen('screen-login'); return; }
-
-  try {
-    const res = await fetch(`${API_BASE}/auth/verify`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
-    const data = await res.json();
-
-    if (data.valid) {
-      localStorage.setItem('tke_manager_user', JSON.stringify(data.user));
-      showDashboard(data.user);
-    } else {
-      localStorage.removeItem('tke_manager_token');
-      localStorage.removeItem('tke_manager_credential_id');
-      showScreen('screen-login');
-    }
-  } catch (err) {
-    showScreen('screen-biometric-lock');
-  }
-}
-
-function showDashboard(user) {
-  document.getElementById('welcome-name').textContent = `ברוך הבא, ${user.full_name || user.username}`;
-  document.getElementById('welcome-region').textContent = user.region ? `אזור: ${user.region}` : '';
-  showScreen('screen-dashboard');
+function setSession(token, user) {
+  currentToken = token;
+  currentUser  = user;
+  localStorage.setItem('tke_token', token);
+  localStorage.setItem('tke_user', JSON.stringify(user));
 }
 
 function doLogout() {
-  localStorage.removeItem('tke_manager_token');
-  localStorage.removeItem('tke_manager_user');
-  localStorage.removeItem('tke_manager_credential_id');
-  localStorage.removeItem('tke_manager_biometric_declined');
-  document.getElementById('login-username').value = '';
+  currentToken = null;
+  currentUser  = null;
+  localStorage.removeItem('tke_token');
+  localStorage.removeItem('tke_user');
+  document.getElementById('app-wrapper').style.display = 'none';
+  document.getElementById('auth-wrapper').style.display = 'flex';
   document.getElementById('login-password').value = '';
-  showScreen('screen-login');
+  document.getElementById('login-error').textContent = '';
+  showAuthScreen('login');
 }
 
-// ── טעינת הדף ──────────────────────────────────────────────
+// ── App ──────────────────────────────────────────────────────
 
-window.addEventListener('DOMContentLoaded', () => {
-  const token = localStorage.getItem('tke_manager_token');
-  const credId = localStorage.getItem('tke_manager_credential_id');
-  const savedUser = localStorage.getItem('tke_manager_user');
+function showApp() {
+  document.getElementById('auth-wrapper').style.display = 'none';
+  document.getElementById('app-wrapper').style.display = 'flex';
+  document.getElementById('nav-username').textContent = currentUser?.full_name || currentUser?.username || '';
+  loadUsers();
+}
 
-  if (token && credId) {
-    // יש טוקן וגם ביומטריה מופעלת — מציגים מסך נעילה
-    if (savedUser) {
-      try {
-        const u = JSON.parse(savedUser);
-        document.getElementById('lock-user-name').textContent = u.full_name || u.username;
-      } catch {}
-    }
-    showScreen('screen-biometric-lock');
-  } else if (token) {
-    // יש טוקן בלי ביומטריה — נכנסים ישר (כמו קודם)
-    doLoginWithToken();
-  } else {
-    showScreen('screen-login');
+function showPage(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+
+// ── Users data ───────────────────────────────────────────────
+
+async function loadUsers() {
+  try {
+    const res = await fetch(`${API}/auth/users`, {
+      headers: { 'Authorization': 'Bearer ' + currentToken },
+    });
+    if (!res.ok) { if (res.status === 401) { doLogout(); return; } }
+    const data = await res.json();
+    allUsers = data.users || [];
+    renderDashboard();
+    renderTechTable();
+  } catch {
+    showToast('שגיאה בטעינת נתונים');
   }
+}
+
+function renderDashboard() {
+  const active = allUsers.filter(u => u.is_active).length;
+  document.getElementById('stat-technicians').textContent = active;
+  document.getElementById('stat-total').textContent = allUsers.length;
+
+  const list = document.getElementById('dashboard-users-list');
+  if (!allUsers.length) { list.innerHTML = '<div class="loading">אין משתמשים</div>'; return; }
+
+  const rows = allUsers.slice(0, 5).map(u => `
+    <tr>
+      <td>${esc(u.full_name || '—')}</td>
+      <td>${esc(u.username)}</td>
+      <td>${esc(u.region || '—')}</td>
+      <td><span class="badge ${u.is_active ? 'badge-active' : 'badge-inactive'}">${u.is_active ? 'פעיל' : 'מושבת'}</span></td>
+    </tr>`).join('');
+
+  list.innerHTML = `
+    <table>
+      <thead><tr><th>שם מלא</th><th>משתמש</th><th>אזור</th><th>סטטוס</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function renderTechTable() {
+  const tbody = document.getElementById('tech-table-body');
+  if (!allUsers.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="loading">אין טכנאים</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = allUsers.map(u => `
+    <tr>
+      <td>${esc(u.full_name || '—')}</td>
+      <td>${esc(u.username)}</td>
+      <td>${esc(u.region || '—')}</td>
+      <td><span class="badge ${u.is_active ? 'badge-active' : 'badge-inactive'}">${u.is_active ? 'פעיל' : 'מושבת'}</span></td>
+      <td>${u.last_login ? new Date(u.last_login).toLocaleDateString('he-IL') : '—'}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn-secondary" onclick="openEditModal('${u.id}')">עריכה</button>
+        ${u.is_active
+          ? `<button class="btn-danger" onclick="toggleUser('${u.id}', false)">השבת</button>`
+          : `<button class="btn-success" onclick="toggleUser('${u.id}', true)">הפעל</button>`}
+      </td>
+    </tr>`).join('');
+}
+
+// ── Modal ────────────────────────────────────────────────────
+
+function openAddModal() {
+  editingUserId = null;
+  document.getElementById('modal-title').textContent = 'הוסף טכנאי';
+  document.getElementById('modal-username').value = '';
+  document.getElementById('modal-username').disabled = false;
+  document.getElementById('modal-fullname').value = '';
+  document.getElementById('modal-region').value = '';
+  document.getElementById('modal-temppass').value = '';
+  document.getElementById('modal-password-section').style.display = 'block';
+  document.getElementById('modal-error').textContent = '';
+  document.getElementById('user-modal').classList.add('open');
+}
+
+function openEditModal(userId) {
+  const user = allUsers.find(u => u.id === userId);
+  if (!user) return;
+  editingUserId = userId;
+  document.getElementById('modal-title').textContent = 'עריכת טכנאי';
+  document.getElementById('modal-username').value = user.username;
+  document.getElementById('modal-username').disabled = true;
+  document.getElementById('modal-fullname').value = user.full_name || '';
+  document.getElementById('modal-region').value = user.region || '';
+  document.getElementById('modal-password-section').style.display = 'none';
+  document.getElementById('modal-error').textContent = '';
+  document.getElementById('user-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('user-modal').classList.remove('open');
+}
+
+async function saveUser() {
+  const errEl = document.getElementById('modal-error');
+  errEl.textContent = '';
+  const btn = document.getElementById('modal-save-btn');
+  btn.disabled = true;
+
+  try {
+    if (editingUserId) {
+      const res = await fetch(`${API}/auth/update-user`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentToken },
+        body: JSON.stringify({
+          user_id: editingUserId,
+          full_name: document.getElementById('modal-fullname').value.trim(),
+          region: document.getElementById('modal-region').value.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { errEl.textContent = data.error || 'שגיאה'; return; }
+      showToast('הטכנאי עודכן');
+    } else {
+      const username   = document.getElementById('modal-username').value.trim();
+      const full_name  = document.getElementById('modal-fullname').value.trim();
+      const region     = document.getElementById('modal-region').value.trim();
+      const temp_password = document.getElementById('modal-temppass').value;
+      if (!username || !temp_password) { errEl.textContent = 'נא למלא שם משתמש וסיסמה'; return; }
+
+      const res = await fetch(`${API}/auth/create-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': 'TKE_ADMIN_2025',
+        },
+        body: JSON.stringify({ username, full_name, region, temp_password }),
+      });
+      const data = await res.json();
+      if (!res.ok) { errEl.textContent = data.error || 'שגיאה'; return; }
+      showToast('טכנאי נוסף בהצלחה');
+    }
+
+    closeModal();
+    await loadUsers();
+  } catch {
+    errEl.textContent = 'שגיאת רשת';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function toggleUser(userId, activate) {
+  try {
+    const res = await fetch(`${API}/auth/toggle-user`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentToken },
+      body: JSON.stringify({ user_id: userId, is_active: activate }),
+    });
+    if (!res.ok) { showToast('שגיאה בעדכון'); return; }
+    showToast(activate ? 'משתמש הופעל' : 'משתמש הושבת');
+    await loadUsers();
+  } catch {
+    showToast('שגיאת רשת');
+  }
+}
+
+// ── Utils ────────────────────────────────────────────────────
+
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// Close modal on overlay click
+document.getElementById('user-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Enter key on login
+document.getElementById('login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+document.getElementById('login-username').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('login-password').focus();
 });
 </script>
-
 </body>
 </html>
