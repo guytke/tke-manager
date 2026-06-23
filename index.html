@@ -815,10 +815,10 @@ async function loadFaults() {
       if (!fd || typeof fd !== 'object') fd = {};
       const date = f.created_at ? new Date(f.created_at).toLocaleString('he-IL') : '—';
       const techName = esc(f.full_name || f.username || f.user_id);
-      const model = fd.model || fd.elevator_model || fd.מודל || '';
-      const code  = fd.fault_code || fd.code || fd.error_code || fd['קוד תקלה'] || fd.קוד || '';
-      const name  = fd.name || fd.fault_name || fd.שם || fd['שם תקלה'] || '';
-      const note  = fd.note || fd.notes || fd.הערה || '';
+      const model = fd.model || '';
+      const code  = fd.code  || '';
+      const name  = fd.name  || '';
+      const note  = fd.note  || '';
       const line1 = esc([model, code ? 'קוד ' + code : ''].filter(Boolean).join(' — ') || '—');
       const cell = `<div class="fault-cell">
         <div class="fault-line1">${line1}</div>
