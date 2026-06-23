@@ -325,6 +325,17 @@
 
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #1f1f1f; }
+  tr.clickable-row { cursor: pointer; }
+
+  .fault-cell { line-height: 1.6; }
+  .fault-line1 { font-size: 14px; color: #fff; font-weight: 600; }
+  .fault-line2 { font-size: 13px; color: #bbb; }
+  .fault-line3 { font-size: 12px; color: #888; font-style: italic; }
+
+  .fault-detail-row { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .fault-detail-row:last-child { border-bottom: none; }
+  .fault-detail-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+  .fault-detail-value { font-size: 14px; color: #ddd; word-break: break-word; }
 
   .badge {
     display: inline-block;
@@ -618,6 +629,17 @@
   </div>
 </div>
 
+<!-- Fault Detail Modal -->
+<div class="modal-overlay" id="fault-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title">פרטי תקלה</div>
+    <div id="fault-modal-content"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeFaultModal()">סגור</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast"></div>
 
@@ -787,16 +809,57 @@ async function loadFaults() {
       tbody.innerHTML = '<tr><td colspan="3" class="loading">אין תקלות</td></tr>';
       return;
     }
-    tbody.innerHTML = faults.map(f => {
-      let content = '—';
-      try { content = esc(JSON.stringify(JSON.parse(f.fault_data), null, 0)); } catch { content = esc(f.fault_data); }
+    tbody.innerHTML = faults.map((f, idx) => {
+      let fd = {};
+      try { fd = JSON.parse(f.fault_data); } catch { fd = {}; }
       const date = f.created_at ? new Date(f.created_at).toLocaleString('he-IL') : '—';
-      const name = esc(f.full_name || f.username || f.user_id);
-      return `<tr><td style="white-space:nowrap">${date}</td><td>${name}</td><td style="max-width:500px;word-break:break-all;font-size:12px;color:#aaa">${content}</td></tr>`;
+      const techName = esc(f.full_name || f.username || f.user_id);
+      const model = fd.model || fd.elevator_model || '';
+      const code  = fd.fault_code || fd.code || fd.error_code || '';
+      const line1 = esc([model, code ? 'קוד ' + code : ''].filter(Boolean).join(' — ') || '—');
+      const line2 = esc(fd.name || fd.fault_name || '');
+      const note  = esc(fd.note || fd.notes || '');
+      const cell = `<div class="fault-cell">
+        <div class="fault-line1">${line1}</div>
+        ${line2 ? `<div class="fault-line2">${line2}</div>` : ''}
+        ${note  ? `<div class="fault-line3">${note}</div>`  : ''}
+      </div>`;
+      return `<tr class="clickable-row" onclick="openFaultModal(${idx})">
+        <td style="white-space:nowrap">${date}</td>
+        <td>${techName}</td>
+        <td>${cell}</td>
+      </tr>`;
     }).join('');
+    // store faults for modal access
+    window._faults = faults;
   } catch {
     tbody.innerHTML = '<tr><td colspan="3" class="loading">שגיאה בטעינה</td></tr>';
   }
+}
+
+function openFaultModal(idx) {
+  const f  = window._faults[idx];
+  let fd = {};
+  try { fd = JSON.parse(f.fault_data); } catch { fd = {}; }
+  const date = f.created_at ? new Date(f.created_at).toLocaleString('he-IL') : '—';
+  const tech = f.full_name || f.username || f.user_id || '—';
+
+  const rows = [
+    ['תאריך', date],
+    ['טכנאי', tech],
+    ...Object.entries(fd).map(([k, v]) => [k, typeof v === 'object' ? JSON.stringify(v) : String(v)]),
+  ];
+
+  document.getElementById('fault-modal-content').innerHTML = rows.map(([label, val]) => `
+    <div class="fault-detail-row">
+      <div class="fault-detail-label">${esc(label)}</div>
+      <div class="fault-detail-value">${esc(val)}</div>
+    </div>`).join('');
+  document.getElementById('fault-modal').classList.add('open');
+}
+
+function closeFaultModal() {
+  document.getElementById('fault-modal').classList.remove('open');
 }
 
 // ── Users data ───────────────────────────────────────────────
@@ -977,6 +1040,9 @@ function showToast(msg) {
 // Close modal on overlay click
 document.getElementById('user-modal').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
+});
+document.getElementById('fault-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeFaultModal();
 });
 
 // Enter key on login
