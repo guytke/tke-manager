@@ -810,19 +810,20 @@ async function loadFaults() {
       return;
     }
     tbody.innerHTML = faults.map((f, idx) => {
-      let fd = {};
-      try { fd = JSON.parse(f.fault_data); } catch { fd = {}; }
+      let fd = f.fault_data;
+      if (typeof fd === 'string') { try { fd = JSON.parse(fd); } catch { fd = {}; } }
+      if (!fd || typeof fd !== 'object') fd = {};
       const date = f.created_at ? new Date(f.created_at).toLocaleString('he-IL') : '—';
       const techName = esc(f.full_name || f.username || f.user_id);
-      const model = fd.model || fd.elevator_model || '';
-      const code  = fd.fault_code || fd.code || fd.error_code || '';
+      const model = fd.model || fd.elevator_model || fd.מודל || '';
+      const code  = fd.fault_code || fd.code || fd.error_code || fd['קוד תקלה'] || fd.קוד || '';
+      const name  = fd.name || fd.fault_name || fd.שם || fd['שם תקלה'] || '';
+      const note  = fd.note || fd.notes || fd.הערה || '';
       const line1 = esc([model, code ? 'קוד ' + code : ''].filter(Boolean).join(' — ') || '—');
-      const line2 = esc(fd.name || fd.fault_name || '');
-      const note  = esc(fd.note || fd.notes || '');
       const cell = `<div class="fault-cell">
         <div class="fault-line1">${line1}</div>
-        ${line2 ? `<div class="fault-line2">${line2}</div>` : ''}
-        ${note  ? `<div class="fault-line3">${note}</div>`  : ''}
+        ${name ? `<div class="fault-line2">${esc(name)}</div>` : ''}
+        ${note ? `<div class="fault-line3">${esc(note)}</div>` : ''}
       </div>`;
       return `<tr class="clickable-row" onclick="openFaultModal(${idx})">
         <td style="white-space:nowrap">${date}</td>
@@ -839,8 +840,9 @@ async function loadFaults() {
 
 function openFaultModal(idx) {
   const f  = window._faults[idx];
-  let fd = {};
-  try { fd = JSON.parse(f.fault_data); } catch { fd = {}; }
+  let fd = f.fault_data;
+  if (typeof fd === 'string') { try { fd = JSON.parse(fd); } catch { fd = {}; } }
+  if (!fd || typeof fd !== 'object') fd = {};
   const date = f.created_at ? new Date(f.created_at).toLocaleString('he-IL') : '—';
   const tech = f.full_name || f.username || f.user_id || '—';
 
