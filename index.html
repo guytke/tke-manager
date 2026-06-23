@@ -563,7 +563,20 @@
     <div id="page-faults" class="screen">
       <div class="page-title">תקלות</div>
       <div class="section-card">
-        <div class="coming-soon">🔧 מודול תקלות — בקרוב</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>תאריך</th>
+                <th>שם משתמש</th>
+                <th>תוכן התקלה</th>
+              </tr>
+            </thead>
+            <tbody id="faults-table-body">
+              <tr><td colspan="3" class="loading">טוען...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -757,6 +770,33 @@ function showPage(name) {
   document.getElementById('page-' + name).classList.add('active');
   document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
   event.currentTarget.classList.add('active');
+  if (name === 'faults') loadFaults();
+}
+
+async function loadFaults() {
+  const tbody = document.getElementById('faults-table-body');
+  tbody.innerHTML = '<tr><td colspan="3" class="loading">טוען...</td></tr>';
+  try {
+    const res = await fetch(`${API}/faults/list`, {
+      headers: { 'Authorization': 'Bearer ' + currentToken },
+    });
+    if (res.status === 401) { doLogout(); return; }
+    const data = await res.json();
+    const faults = data.faults || [];
+    if (!faults.length) {
+      tbody.innerHTML = '<tr><td colspan="3" class="loading">אין תקלות</td></tr>';
+      return;
+    }
+    tbody.innerHTML = faults.map(f => {
+      let content = '—';
+      try { content = esc(JSON.stringify(JSON.parse(f.fault_data), null, 0)); } catch { content = esc(f.fault_data); }
+      const date = f.created_at ? new Date(f.created_at).toLocaleString('he-IL') : '—';
+      const name = esc(f.full_name || f.username || f.user_id);
+      return `<tr><td style="white-space:nowrap">${date}</td><td>${name}</td><td style="max-width:500px;word-break:break-all;font-size:12px;color:#aaa">${content}</td></tr>`;
+    }).join('');
+  } catch {
+    tbody.innerHTML = '<tr><td colspan="3" class="loading">שגיאה בטעינה</td></tr>';
+  }
 }
 
 // ── Users data ───────────────────────────────────────────────
