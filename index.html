@@ -449,10 +449,18 @@
   }
 
   @media (max-width: 600px) {
-    .nav-links .nav-link { padding: 8px 10px; font-size: 13px; }
+    #topnav { padding: 0 10px; gap: 6px; }
+    .nav-logo { font-size: 13px; white-space: nowrap; flex-shrink: 0; }
+    .nav-links { gap: 2px; flex-shrink: 1; overflow: hidden; }
+    .nav-links .nav-link { padding: 8px 10px; font-size: 13px; min-width: 40px; justify-content: center; }
     .nav-link span.nav-label { display: none; }
-    #content { padding: 16px; }
+    .nav-link svg { width: 20px; height: 20px; }
+    .nav-user { gap: 6px; flex-shrink: 0; }
+    .nav-user > span#nav-username { display: none; }
+    #content { padding: 12px; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .fault-stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .fault-stat-value { font-size: 22px; }
   }
 </style>
 </head>
