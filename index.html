@@ -327,15 +327,34 @@
   tr:hover td { background: #1f1f1f; }
   tr.clickable-row { cursor: pointer; }
 
-  .fault-cell { line-height: 1.6; }
-  .fault-line1 { font-size: 14px; color: #fff; font-weight: 600; }
-  .fault-line2 { font-size: 13px; color: #bbb; }
-  .fault-line3 { font-size: 12px; color: #888; font-style: italic; }
+  /* Fault stats */
+  .fault-stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  .fault-stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 16px; text-align: center; }
+  .fault-stat-value { font-size: 28px; font-weight: 700; color: var(--accent); line-height: 1; }
+  .fault-stat-label { font-size: 12px; color: #888; margin-top: 6px; }
+
+  /* Bar chart */
+  .fault-chart { display: flex; flex-direction: column; gap: 10px; }
+  .fault-bar-row { display: flex; align-items: center; gap: 10px; }
+  .fault-bar-label { font-size: 12px; color: #bbb; width: 80px; text-align: right; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fault-bar-track { flex: 1; background: #1e1e1e; border-radius: 4px; height: 18px; overflow: hidden; }
+  .fault-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+  .fault-bar-count { font-size: 12px; color: #888; width: 24px; text-align: left; flex-shrink: 0; }
+
+  /* Compact list */
+  .fault-list { display: flex; flex-direction: column; gap: 0; }
+  .fault-row { display: flex; align-items: center; gap: 10px; padding: 10px 4px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+  .fault-row:last-child { border-bottom: none; }
+  .fault-row:hover { background: #1a1a1a; border-radius: 8px; }
+  .fault-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; border: 1px solid; flex-shrink: 0; white-space: nowrap; }
+  .fault-row-name { flex: 1; font-size: 13px; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fault-row-tech { font-size: 12px; color: #888; flex-shrink: 0; }
+  .fault-row-time { font-size: 11px; color: #666; flex-shrink: 0; width: 42px; text-align: left; }
 
   .fault-detail-row { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-bottom: 1px solid var(--border); }
   .fault-detail-row:last-child { border-bottom: none; }
   .fault-detail-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
-  .fault-detail-value { font-size: 14px; color: #ddd; word-break: break-word; }
+  .fault-detail-value { font-size: 14px; color: #ddd; word-break: break-word; white-space: pre-wrap; }
 
   .badge {
     display: inline-block;
@@ -573,20 +592,33 @@
     <!-- Faults -->
     <div id="page-faults" class="screen">
       <div class="page-title">תקלות</div>
+
+      <!-- Stats row -->
+      <div class="fault-stats-row">
+        <div class="fault-stat-card">
+          <div class="fault-stat-value" id="fstat-total">—</div>
+          <div class="fault-stat-label">סה"כ תקלות</div>
+        </div>
+        <div class="fault-stat-card">
+          <div class="fault-stat-value" id="fstat-today">—</div>
+          <div class="fault-stat-label">תקלות היום</div>
+        </div>
+        <div class="fault-stat-card">
+          <div class="fault-stat-value" id="fstat-models">—</div>
+          <div class="fault-stat-label">מודלים שונים</div>
+        </div>
+      </div>
+
+      <!-- Bar chart by model -->
+      <div class="section-card" style="margin-bottom:16px">
+        <div class="section-title">תקלות לפי מודל</div>
+        <div id="fault-chart" class="fault-chart"></div>
+      </div>
+
+      <!-- Compact list -->
       <div class="section-card">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>תאריך</th>
-                <th>שם משתמש</th>
-                <th>תוכן התקלה</th>
-              </tr>
-            </thead>
-            <tbody id="faults-table-body">
-              <tr><td colspan="3" class="loading">טוען...</td></tr>
-            </tbody>
-          </table>
+        <div id="fault-list" class="fault-list">
+          <div class="loading">טוען...</div>
         </div>
       </div>
     </div>
@@ -795,9 +827,24 @@ function showPage(name) {
   if (name === 'faults') loadFaults();
 }
 
+function modelColor(model) {
+  if (!model) return '#888';
+  const m = model.toUpperCase();
+  if (m.includes('20.50')) return '#f97316';
+  if (m.includes('CMC4')) return '#a855f7';
+  if (m.includes('CMC3')) return '#22c55e';
+  return '#6b7280';
+}
+
+function parseFaultData(f) {
+  let fd = f.fault_data;
+  if (typeof fd === 'string') { try { fd = JSON.parse(fd); } catch { fd = {}; } }
+  return (fd && typeof fd === 'object') ? fd : {};
+}
+
 async function loadFaults() {
-  const tbody = document.getElementById('faults-table-body');
-  tbody.innerHTML = '<tr><td colspan="3" class="loading">טוען...</td></tr>';
+  const list = document.getElementById('fault-list');
+  list.innerHTML = '<div class="loading">טוען...</div>';
   try {
     const res = await fetch(`${API}/faults/list`, {
       headers: { 'Authorization': 'Bearer ' + currentToken },
@@ -805,51 +852,81 @@ async function loadFaults() {
     if (res.status === 401) { doLogout(); return; }
     const data = await res.json();
     const faults = data.faults || [];
+    window._faults = faults;
+
     if (!faults.length) {
-      tbody.innerHTML = '<tr><td colspan="3" class="loading">אין תקלות</td></tr>';
+      list.innerHTML = '<div class="loading">אין תקלות</div>';
+      document.getElementById('fstat-total').textContent = '0';
+      document.getElementById('fstat-today').textContent = '0';
+      document.getElementById('fstat-models').textContent = '0';
+      document.getElementById('fault-chart').innerHTML = '';
       return;
     }
-    tbody.innerHTML = faults.map((f, idx) => {
-      let fd = f.fault_data;
-      if (typeof fd === 'string') { try { fd = JSON.parse(fd); } catch { fd = {}; } }
-      if (!fd || typeof fd !== 'object') fd = {};
-      const date = f.created_at ? new Date(f.created_at).toLocaleString('he-IL') : '—';
-      const techName = esc(f.full_name || f.username || f.user_id);
+
+    // stats
+    const todayStr = new Date().toLocaleDateString('he-IL');
+    let todayCount = 0;
+    const modelCounts = {};
+    faults.forEach(f => {
+      const fd = parseFaultData(f);
+      const model = fd.model || '—';
+      modelCounts[model] = (modelCounts[model] || 0) + 1;
+      const d = f.created_at ? new Date(f.created_at).toLocaleDateString('he-IL') : '';
+      if (d === todayStr) todayCount++;
+    });
+    document.getElementById('fstat-total').textContent = faults.length;
+    document.getElementById('fstat-today').textContent = todayCount;
+    document.getElementById('fstat-models').textContent = Object.keys(modelCounts).length;
+
+    // bar chart
+    const maxCount = Math.max(...Object.values(modelCounts));
+    document.getElementById('fault-chart').innerHTML = Object.entries(modelCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([model, cnt]) => {
+        const pct = Math.round((cnt / maxCount) * 100);
+        const color = modelColor(model);
+        return `<div class="fault-bar-row">
+          <div class="fault-bar-label">${esc(model)}</div>
+          <div class="fault-bar-track">
+            <div class="fault-bar-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+          <div class="fault-bar-count">${cnt}</div>
+        </div>`;
+      }).join('');
+
+    // compact list
+    list.innerHTML = faults.map((f, idx) => {
+      const fd = parseFaultData(f);
       const model = fd.model || '';
       const code  = fd.code  || '';
       const name  = fd.name  || '';
-      const note  = fd.note  || '';
-      const line1 = esc([model, code ? 'קוד ' + code : ''].filter(Boolean).join(' — ') || '—');
-      const cell = `<div class="fault-cell">
-        <div class="fault-line1">${line1}</div>
-        ${name ? `<div class="fault-line2">${esc(name)}</div>` : ''}
-        ${note ? `<div class="fault-line3">${esc(note)}</div>` : ''}
+      const tech  = f.full_name || f.username || f.user_id || '—';
+      const time  = f.created_at ? new Date(f.created_at).toLocaleTimeString('he-IL', {hour:'2-digit',minute:'2-digit'}) : '—';
+      const color = modelColor(model);
+      const badgeText = [model, code ? '#' + code : ''].filter(Boolean).join(' ');
+      return `<div class="fault-row" onclick="openFaultModal(${idx})">
+        <span class="fault-badge" style="background:${color}20;color:${color};border-color:${color}40">${esc(badgeText || '—')}</span>
+        <span class="fault-row-name">${esc(name || '—')}</span>
+        <span class="fault-row-tech">${esc(tech)}</span>
+        <span class="fault-row-time">${time}</span>
       </div>`;
-      return `<tr class="clickable-row" onclick="openFaultModal(${idx})">
-        <td style="white-space:nowrap">${date}</td>
-        <td>${techName}</td>
-        <td>${cell}</td>
-      </tr>`;
     }).join('');
-    // store faults for modal access
-    window._faults = faults;
+
   } catch {
-    tbody.innerHTML = '<tr><td colspan="3" class="loading">שגיאה בטעינה</td></tr>';
+    document.getElementById('fault-list').innerHTML = '<div class="loading">שגיאה בטעינה</div>';
   }
 }
 
 function openFaultModal(idx) {
   const f  = window._faults[idx];
-  let fd = f.fault_data;
-  if (typeof fd === 'string') { try { fd = JSON.parse(fd); } catch { fd = {}; } }
-  if (!fd || typeof fd !== 'object') fd = {};
+  const fd = parseFaultData(f);
   const date = f.created_at ? new Date(f.created_at).toLocaleString('he-IL') : '—';
   const tech = f.full_name || f.username || f.user_id || '—';
 
   const rows = [
     ['תאריך', date],
     ['טכנאי', tech],
-    ...Object.entries(fd).map(([k, v]) => [k, typeof v === 'object' ? JSON.stringify(v) : String(v)]),
+    ...Object.entries(fd).map(([k, v]) => [k, typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v)]),
   ];
 
   document.getElementById('fault-modal-content').innerHTML = rows.map(([label, val]) => `
