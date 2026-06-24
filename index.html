@@ -934,7 +934,7 @@ function openFaultModal(idx) {
   const rows = [
     ['תאריך', date],
     ['טכנאי', tech],
-    ...Object.entries(fd).map(([k, v]) => [k, typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v)]),
+    ...Object.entries(fd).map(([k, v]) => [translateFaultKey(k), typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v)]),
   ];
 
   document.getElementById('fault-modal-content').innerHTML = rows.map(([label, val]) => `
@@ -943,6 +943,11 @@ function openFaultModal(idx) {
       <div class="fault-detail-value">${esc(val)}</div>
     </div>`).join('');
   document.getElementById('fault-modal').classList.add('open');
+}
+
+function translateFaultKey(k) {
+  const map = { id:'מזהה', model:'מודל', code:'קוד תקלה', name:'שם תקלה', level:'מיקום', book:'מהספר', field:'ניסיון שטח', images:'תמונות', note:'הערה', date:'תאריך' };
+  return map[k.toLowerCase()] || k;
 }
 
 function closeFaultModal() {
