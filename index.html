@@ -274,6 +274,8 @@
     padding: 20px;
     text-align: center;
   }
+  .clickable-card { cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+  .clickable-card:hover { border-color: var(--accent); background: #1e1e2a; }
 
   .stat-card .stat-num {
     font-size: 36px;
@@ -562,21 +564,21 @@
     <div id="page-dashboard" class="screen active">
       <div class="page-title">סקירה כללית</div>
       <div class="stats-grid">
-        <div class="stat-card">
+        <div class="stat-card clickable-card" onclick="openDashModal('active-techs')">
           <div class="stat-num" id="stat-technicians">—</div>
           <div class="stat-label">טכנאים פעילים</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card clickable-card" onclick="openDashModal('all-techs')">
           <div class="stat-num" id="stat-total">—</div>
           <div class="stat-label">סה״כ טכנאים</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-num">—</div>
+        <div class="stat-card clickable-card" onclick="openDashModal('open-faults')">
+          <div class="stat-num" id="stat-open-faults">—</div>
           <div class="stat-label">תקלות פתוחות</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-num">—</div>
-          <div class="stat-label">אתרים</div>
+        <div class="stat-card clickable-card" onclick="openDashModal('closed-faults')">
+          <div class="stat-num" id="stat-closed-faults">—</div>
+          <div class="stat-label">קריאות שנסגרו</div>
         </div>
       </div>
 
@@ -693,6 +695,17 @@
     <div id="fault-modal-content"></div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeFaultModal()">סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard Info Modal -->
+<div class="modal-overlay" id="dash-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-title" id="dash-modal-title"></div>
+    <div id="dash-modal-content" style="max-height:60vh;overflow-y:auto"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeDashModal()">סגור</button>
     </div>
   </div>
 </div>
@@ -854,6 +867,7 @@ function showApp() {
   document.getElementById('app-wrapper').style.display = 'flex';
   document.getElementById('nav-username').textContent = currentUser?.full_name || currentUser?.username || '';
   loadUsers();
+  loadFaults();
 }
 
 function showPage(name) {
@@ -890,6 +904,7 @@ async function loadFaults() {
     const data = await res.json();
     const faults = data.faults || [];
     window._faults = faults;
+    renderDashboard();
 
     if (!faults.length) {
       list.innerHTML = '<div class="loading">אין תקלות</div>';
@@ -1031,6 +1046,61 @@ async function confirmDeleteFault() {
   }
 }
 
+function openDashModal(type) {
+  const titles = { 'active-techs': 'טכנאים פעילים', 'all-techs': 'כל הטכנאים', 'open-faults': 'תקלות פתוחות', 'closed-faults': 'קריאות שנסגרו' };
+  document.getElementById('dash-modal-title').textContent = titles[type] || '';
+
+  let html = '';
+  const faults = window._faults || [];
+
+  if (type === 'active-techs' || type === 'all-techs') {
+    const list = type === 'active-techs' ? allUsers.filter(u => u.is_active) : allUsers;
+    if (!list.length) { html = '<div class="loading">אין נתונים</div>'; }
+    else html = `<table><thead><tr><th>שם מלא</th><th>משתמש</th><th>אזור</th><th>סטטוס</th></tr></thead><tbody>` +
+      list.map(u => `<tr>
+        <td>${esc(u.full_name || '—')}</td>
+        <td>${esc(u.username)}</td>
+        <td>${esc(u.region || '—')}</td>
+        <td style="white-space:nowrap">${u.username === 'guy' ? '<span class="badge badge-admin">מנהל שטח</span> ' : ''}<span class="badge ${u.is_active ? 'badge-active' : 'badge-inactive'}">${u.is_active ? 'פעיל' : 'מושבת'}</span></td>
+      </tr>`).join('') + `</tbody></table>`;
+  } else {
+    const list = type === 'open-faults'
+      ? faults.filter(f => { const fd = parseFaultData(f); return fd.status !== 'closed'; })
+      : faults.filter(f => { const fd = parseFaultData(f); return fd.status === 'closed'; });
+    if (!list.length) { html = '<div class="loading">אין תקלות</div>'; }
+    else {
+      const byTech = {};
+      list.forEach(f => {
+        const key = f.user_id;
+        if (!byTech[key]) byTech[key] = { name: f.full_name || f.username || '—', faults: [] };
+        byTech[key].faults.push(f);
+      });
+      html = Object.values(byTech).map(g => {
+        const rows = g.faults.map(f => {
+          const fd = parseFaultData(f);
+          const model = fd.model || ''; const code = fd.code || ''; const name = fd.name || '—';
+          const date = f.created_at ? new Date(f.created_at).toLocaleDateString('he-IL') : '—';
+          const color = modelColor(model);
+          const badge = [model, code ? '#'+code : ''].filter(Boolean).join(' ');
+          return `<div class="fault-row" style="padding:8px 4px">
+            <span class="fault-badge" style="background:${color}20;color:${color};border-color:${color}40">${esc(badge||'—')}</span>
+            <span class="fault-row-name">${esc(name)}</span>
+            <span class="fault-row-time">${date}</span>
+          </div>`;
+        }).join('');
+        return `<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:600;color:#ccc;padding:6px 4px;border-bottom:1px solid var(--border);margin-bottom:4px">${esc(g.name)} <span style="color:#666;font-weight:400">(${g.faults.length})</span></div>${rows}</div>`;
+      }).join('');
+    }
+  }
+
+  document.getElementById('dash-modal-content').innerHTML = html;
+  document.getElementById('dash-modal').classList.add('open');
+}
+
+function closeDashModal() {
+  document.getElementById('dash-modal').classList.remove('open');
+}
+
 function toggleTechGroup(header) {
   header.classList.toggle('open');
   header.nextElementSibling.classList.toggle('open');
@@ -1066,6 +1136,12 @@ function renderDashboard() {
   const active = allUsers.filter(u => u.is_active).length;
   document.getElementById('stat-technicians').textContent = active;
   document.getElementById('stat-total').textContent = allUsers.length;
+
+  const faults = window._faults || [];
+  const openF  = faults.filter(f => { const fd = parseFaultData(f); return fd.status !== 'closed'; });
+  const closedF = faults.filter(f => { const fd = parseFaultData(f); return fd.status === 'closed'; });
+  document.getElementById('stat-open-faults').textContent = openF.length;
+  document.getElementById('stat-closed-faults').textContent = closedF.length;
 
   const list = document.getElementById('dashboard-users-list');
   if (!allUsers.length) { list.innerHTML = '<div class="loading">אין משתמשים</div>'; return; }
