@@ -877,7 +877,7 @@ async function registerPush() {
   if (!('PushManager' in window))      { console.warn('[Push] PushManager not supported'); return; }
   try {
     console.log('[Push] registering sw.js...');
-    const reg = await navigator.serviceWorker.register('./sw.js');
+    const reg = await navigator.serviceWorker.register('/tke-manager/sw.js');
     console.log('[Push] SW registered:', reg.scope);
 
     console.log('[Push] requesting notification permission...');
