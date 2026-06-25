@@ -1042,7 +1042,7 @@ function renderDashboard() {
       <td>${esc(u.full_name || '—')}</td>
       <td>${esc(u.username)}</td>
       <td>${esc(u.region || '—')}</td>
-      <td><span class="badge ${u.username === 'guy' ? 'badge-admin' : u.is_active ? 'badge-active' : 'badge-inactive'}">${u.username === 'guy' ? 'מנהל שטח' : u.is_active ? 'פעיל' : 'מושבת'}</span></td>
+      <td style="white-space:nowrap">${u.username === 'guy' ? '<span class="badge badge-admin">מנהל שטח</span> ' : ''}<span class="badge ${u.is_active ? 'badge-active' : 'badge-inactive'}">${u.is_active ? 'פעיל' : 'מושבת'}</span></td>
     </tr>`).join('');
 
   list.innerHTML = `
@@ -1064,7 +1064,7 @@ function renderTechTable() {
       <td>${esc(u.full_name || '—')}</td>
       <td>${esc(u.username)}</td>
       <td>${esc(u.region || '—')}</td>
-      <td><span class="badge ${u.username === 'guy' ? 'badge-admin' : u.is_active ? 'badge-active' : 'badge-inactive'}">${u.username === 'guy' ? 'מנהל שטח' : u.is_active ? 'פעיל' : 'מושבת'}</span></td>
+      <td style="white-space:nowrap">${u.username === 'guy' ? '<span class="badge badge-admin">מנהל שטח</span> ' : ''}<span class="badge ${u.is_active ? 'badge-active' : 'badge-inactive'}">${u.is_active ? 'פעיל' : 'מושבת'}</span></td>
       <td>${u.last_login ? new Date(u.last_login).toLocaleDateString('he-IL') : '—'}</td>
       <td style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn-secondary" onclick="openEditModal('${u.id}')">עריכה</button>
