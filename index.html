@@ -350,6 +350,8 @@
   .fault-row-name { flex: 1; font-size: 13px; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .fault-row-tech { font-size: 12px; color: #888; flex-shrink: 0; }
   .fault-row-time { font-size: 11px; color: #666; flex-shrink: 0; width: 42px; text-align: left; }
+  .fault-delete-btn { flex-shrink: 0; background: none; border: none; color: #555; font-size: 13px; cursor: pointer; padding: 2px 6px; border-radius: 4px; line-height: 1; transition: color 0.15s, background 0.15s; }
+  .fault-delete-btn:hover { color: #ff6666; background: #2a1010; }
 
   .fault-detail-row { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-bottom: 1px solid var(--border); }
   .fault-detail-row:last-child { border-bottom: none; }
@@ -681,6 +683,18 @@
   </div>
 </div>
 
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="delete-fault-modal">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div class="modal-title" style="margin-bottom:12px">מחיקת תקלה</div>
+    <p style="color:#ccc;margin-bottom:24px">האם למחוק תקלה זו?</p>
+    <div class="modal-actions" style="justify-content:center;gap:12px">
+      <button class="btn-secondary" onclick="closeDeleteModal()">ביטול</button>
+      <button class="btn-primary" style="background:#c0392b;width:auto;padding:10px 20px;margin:0" onclick="confirmDeleteFault()">כן, מחק</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast"></div>
 
@@ -918,6 +932,7 @@ async function loadFaults() {
         <span class="fault-row-name">${esc(name || '—')}</span>
         <span class="fault-row-tech">${esc(tech)}</span>
         <span class="fault-row-time">${time}</span>
+        <button class="fault-delete-btn" onclick="event.stopPropagation();openDeleteModal(${idx})" title="מחק תקלה">✕</button>
       </div>`;
     }).join('');
 
@@ -944,6 +959,45 @@ function openFaultModal(idx) {
       <div class="fault-detail-value">${esc(val)}</div>
     </div>`).join('');
   document.getElementById('fault-modal').classList.add('open');
+}
+
+let _deleteFaultIdx = null;
+
+function openDeleteModal(idx) {
+  _deleteFaultIdx = idx;
+  document.getElementById('delete-fault-modal').classList.add('open');
+}
+
+function closeDeleteModal() {
+  _deleteFaultIdx = null;
+  document.getElementById('delete-fault-modal').classList.remove('open');
+}
+
+async function confirmDeleteFault() {
+  if (_deleteFaultIdx === null) return;
+  const f = window._faults[_deleteFaultIdx];
+  const fd = parseFaultData(f);
+  const fault_id = fd.id || f.id;
+  if (!fault_id) { showToast('לא נמצא מזהה תקלה'); closeDeleteModal(); return; }
+
+  try {
+    const res = await fetch(`${API}/faults/delete`, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + currentToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fault_id }),
+    });
+    if (res.status === 401) { doLogout(); return; }
+    const data = await res.json();
+    if (data.ok) {
+      showToast('התקלה נמחקה');
+      closeDeleteModal();
+      loadFaults();
+    } else {
+      showToast('שגיאה: ' + (data.error || 'מחיקה נכשלה'));
+    }
+  } catch {
+    showToast('שגיאה בחיבור');
+  }
 }
 
 function translateFaultKey(k) {
