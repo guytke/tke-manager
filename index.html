@@ -356,6 +356,17 @@
   .fault-delete-btn { flex-shrink: 0; background: none; border: none; color: #555; font-size: 13px; cursor: pointer; padding: 2px 6px; border-radius: 4px; line-height: 1; transition: color 0.15s, background 0.15s; }
   .fault-delete-btn:hover { color: #ff6666; background: #2a1010; }
 
+  /* Tech group accordion */
+  .tech-group { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+  .tech-group-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; background: #1e1e1e; transition: background 0.15s; user-select: none; }
+  .tech-group-header:hover { background: #252525; }
+  .tech-group-name { font-size: 15px; font-weight: 600; color: #eee; flex: 1; }
+  .tech-group-count { font-size: 12px; color: #888; background: #2a2a2a; padding: 2px 8px; border-radius: 99px; }
+  .tech-group-arrow { font-size: 14px; color: #666; transition: transform 0.2s; }
+  .tech-group-header.open .tech-group-arrow { transform: rotate(180deg); }
+  .tech-group-body { display: none; padding: 0 8px 8px; }
+  .tech-group-body.open { display: block; }
+
   .fault-detail-row { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-bottom: 1px solid var(--border); }
   .fault-detail-row:last-child { border-bottom: none; }
   .fault-detail-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -629,7 +640,7 @@
         <div id="fault-chart" class="fault-chart"></div>
       </div>
 
-      <!-- Compact list -->
+      <!-- Grouped by technician -->
       <div class="section-card">
         <div id="fault-list" class="fault-list">
           <div class="loading">טוען...</div>
@@ -920,22 +931,39 @@ async function loadFaults() {
         </div>`;
       }).join('');
 
-    // compact list
-    list.innerHTML = faults.map((f, idx) => {
-      const fd = parseFaultData(f);
-      const model = fd.model || '';
-      const code  = fd.code  || '';
-      const name  = fd.name  || '';
-      const tech  = f.full_name || f.username || f.user_id || '—';
-      const time  = f.created_at ? new Date(f.created_at).toLocaleTimeString('he-IL', {hour:'2-digit',minute:'2-digit'}) : '—';
-      const color = modelColor(model);
-      const badgeText = [model, code ? '#' + code : ''].filter(Boolean).join(' ');
-      return `<div class="fault-row" onclick="openFaultModal(${idx})">
-        <span class="fault-badge" style="background:${color}20;color:${color};border-color:${color}40">${esc(badgeText || '—')}</span>
-        <span class="fault-row-name">${esc(name || '—')}</span>
-        <span class="fault-row-tech">${esc(tech)}</span>
-        <span class="fault-row-time">${time}</span>
-        <button class="fault-delete-btn" onclick="event.stopPropagation();openDeleteModal(${idx})" title="מחק תקלה">✕</button>
+    // group by technician
+    const byTech = {};
+    faults.forEach((f, idx) => {
+      const key = f.user_id;
+      if (!byTech[key]) byTech[key] = { name: f.full_name || f.username || f.user_id || '—', faults: [] };
+      byTech[key].faults.push({ f, idx });
+    });
+
+    list.innerHTML = Object.entries(byTech).map(([uid, group]) => {
+      const total = group.faults.length;
+      const rows = group.faults.map(({ f, idx }) => {
+        const fd = parseFaultData(f);
+        const model = fd.model || '';
+        const code  = fd.code  || '';
+        const name  = fd.name  || '';
+        const date  = f.created_at ? new Date(f.created_at).toLocaleDateString('he-IL') : '—';
+        const color = modelColor(model);
+        const badgeText = [model, code ? '#' + code : ''].filter(Boolean).join(' ');
+        return `<div class="fault-row" onclick="openFaultModal(${idx})">
+          <span class="fault-badge" style="background:${color}20;color:${color};border-color:${color}40">${esc(badgeText || '—')}</span>
+          <span class="fault-row-name">${esc(name || '—')}</span>
+          <span class="fault-row-time">${date}</span>
+          <button class="fault-delete-btn" onclick="event.stopPropagation();openDeleteModal(${idx})" title="מחק">✕</button>
+        </div>`;
+      }).join('');
+
+      return `<div class="tech-group">
+        <div class="tech-group-header" onclick="toggleTechGroup(this)">
+          <span class="tech-group-name">${esc(group.name)}</span>
+          <span class="tech-group-count">${total} תקלות</span>
+          <span class="tech-group-arrow">▾</span>
+        </div>
+        <div class="tech-group-body">${rows}</div>
       </div>`;
     }).join('');
 
@@ -1001,6 +1029,11 @@ async function confirmDeleteFault() {
   } catch {
     showToast('שגיאה בחיבור');
   }
+}
+
+function toggleTechGroup(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
 }
 
 function translateFaultKey(k) {
