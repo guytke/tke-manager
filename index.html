@@ -872,30 +872,45 @@ function showApp() {
 }
 
 async function registerPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  console.log('[Push] starting registerPush');
+  if (!('serviceWorker' in navigator)) { console.warn('[Push] serviceWorker not supported'); return; }
+  if (!('PushManager' in window))      { console.warn('[Push] PushManager not supported'); return; }
   try {
+    console.log('[Push] registering sw.js...');
     const reg = await navigator.serviceWorker.register('/sw.js');
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') return;
+    console.log('[Push] SW registered:', reg.scope);
 
+    console.log('[Push] requesting notification permission...');
+    const perm = await Notification.requestPermission();
+    console.log('[Push] permission result:', perm);
+    if (perm !== 'granted') { console.warn('[Push] permission denied'); return; }
+
+    console.log('[Push] fetching VAPID public key...');
     const keyRes = await fetch(`${API}/push/vapid-public-key`, {
       headers: { 'Authorization': 'Bearer ' + currentToken },
     });
-    if (!keyRes.ok) return;
+    console.log('[Push] VAPID key response status:', keyRes.status);
+    if (!keyRes.ok) { console.warn('[Push] failed to get VAPID key'); return; }
     const { publicKey } = await keyRes.json();
+    console.log('[Push] got VAPID key:', publicKey?.slice(0, 20) + '...');
 
+    console.log('[Push] subscribing to push...');
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(publicKey),
     });
+    console.log('[Push] subscribed:', sub.endpoint?.slice(0, 40) + '...');
 
-    await fetch(`${API}/push/subscribe`, {
+    console.log('[Push] sending subscription to server...');
+    const saveRes = await fetch(`${API}/push/subscribe`, {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + currentToken, 'Content-Type': 'application/json' },
       body: JSON.stringify(sub),
     });
+    console.log('[Push] save subscription status:', saveRes.status);
+    console.log('[Push] done ✓');
   } catch (err) {
-    console.warn('Push registration failed:', err);
+    console.error('[Push] registration failed:', err);
   }
 }
 
