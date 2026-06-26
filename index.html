@@ -578,7 +578,7 @@
         </div>
         <div class="stat-card clickable-card" onclick="openDashModal('closed-faults')">
           <div class="stat-num" id="stat-closed-faults">—</div>
-          <div class="stat-label">קריאות שנסגרו</div>
+          <div class="stat-label">תקלות שנסגרו</div>
         </div>
       </div>
 
@@ -1118,7 +1118,7 @@ async function confirmDeleteFault() {
 }
 
 function openDashModal(type) {
-  const titles = { 'active-techs': 'טכנאים פעילים', 'all-techs': 'כל הטכנאים', 'open-faults': 'תקלות פתוחות', 'closed-faults': 'קריאות שנסגרו' };
+  const titles = { 'active-techs': 'טכנאים פעילים', 'all-techs': 'כל הטכנאים', 'open-faults': 'תקלות פתוחות', 'closed-faults': 'תקלות שנסגרו' };
   document.getElementById('dash-modal-title').textContent = titles[type] || '';
 
   let html = '';
@@ -1135,9 +1135,10 @@ function openDashModal(type) {
         <td style="white-space:nowrap">${u.username === 'guy' ? '<span class="badge badge-admin">מנהל שטח</span> ' : ''}<span class="badge ${u.is_active ? 'badge-active' : 'badge-inactive'}">${u.is_active ? 'פעיל' : 'מושבת'}</span></td>
       </tr>`).join('') + `</tbody></table>`;
   } else {
+    const isOpen = f => { const fd = parseFaultData(f); return fd.status === 'open'; };
     const list = type === 'open-faults'
-      ? faults.filter(f => { const fd = parseFaultData(f); return fd.status !== 'closed'; })
-      : faults.filter(f => { const fd = parseFaultData(f); return fd.status === 'closed'; });
+      ? faults.filter(isOpen)
+      : faults.filter(f => !isOpen(f));
     if (!list.length) { html = '<div class="loading">אין תקלות</div>'; }
     else {
       const byTech = {};
@@ -1209,8 +1210,8 @@ function renderDashboard() {
   document.getElementById('stat-total').textContent = allUsers.length;
 
   const faults = window._faults || [];
-  const openF  = faults.filter(f => { const fd = parseFaultData(f); return fd.status !== 'closed'; });
-  const closedF = faults.filter(f => { const fd = parseFaultData(f); return fd.status === 'closed'; });
+  const openF   = faults.filter(f => { const fd = parseFaultData(f); return fd.status === 'open'; });
+  const closedF = faults.filter(f => { const fd = parseFaultData(f); return fd.status !== 'open'; });
   document.getElementById('stat-open-faults').textContent = openF.length;
   document.getElementById('stat-closed-faults').textContent = closedF.length;
 
