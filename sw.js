@@ -3,8 +3,8 @@ self.addEventListener('push', function(e) {
   e.waitUntil(
     self.registration.showNotification(data.title || 'TKE Manager', {
       body: data.body || '',
-      icon: './icon.png',
-      badge: './icon.png'
+      icon: './icon.jpg',
+      badge: './icon.jpg'
     })
   );
 });
