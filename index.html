@@ -588,7 +588,7 @@
       </div>
 
       <div style="text-align:center;margin-top:8px">
-        <button class="btn-secondary" style="width:auto;padding:10px 20px;font-size:14px" onclick="registerPush()">🔔 הפעל התראות</button>
+        <button class="btn-secondary" style="width:auto;padding:10px 20px;font-size:14px" onclick="requestPushManual()">🔔 הפעל התראות</button>
       </div>
     </div>
 
@@ -873,6 +873,15 @@ function showApp() {
   loadUsers();
   loadFaults();
   registerPush();
+}
+
+async function requestPushManual() {
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    await registerPush();
+  } else {
+    alert('התראות נחסמו — אפשר בהגדרות הדפדפן');
+  }
 }
 
 async function registerPush() {
