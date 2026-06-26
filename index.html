@@ -549,6 +549,10 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         <span class="nav-label">אתרים</span>
       </button>
+      <button class="nav-link" onclick="showPage('learning')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        <span class="nav-label">לימוד</span>
+      </button>
     </div>
     <div class="nav-user">
       <span id="nav-username"></span>
@@ -662,6 +666,27 @@
       <div class="page-title">אתרים</div>
       <div class="section-card">
         <div class="coming-soon">📍 מודול אתרים — בקרוב</div>
+      </div>
+    </div>
+
+    <div id="page-learning" class="screen">
+      <div class="page-title">לימוד ותצורה</div>
+      <div class="fault-stats-row" style="margin-bottom:16px">
+        <div class="fault-stat-card">
+          <div class="fault-stat-value" id="lrn-stat-total">—</div>
+          <div class="fault-stat-label">סה"כ פריטים</div>
+        </div>
+        <div class="fault-stat-card">
+          <div class="fault-stat-value" id="lrn-stat-models">—</div>
+          <div class="fault-stat-label">מודלים</div>
+        </div>
+        <div class="fault-stat-card">
+          <div class="fault-stat-value" id="lrn-stat-techs">—</div>
+          <div class="fault-stat-label">טכנאים</div>
+        </div>
+      </div>
+      <div class="section-card">
+        <div id="learning-list"><div class="loading">טוען...</div></div>
       </div>
     </div>
   </div>
@@ -950,6 +975,7 @@ function showPage(name) {
   document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
   event.currentTarget.classList.add('active');
   if (name === 'faults') loadFaults();
+  if (name === 'learning') loadLearning();
 }
 
 function modelColor(model) {
@@ -1388,6 +1414,73 @@ document.getElementById('login-username').addEventListener('keydown', e => {
 });
 </script>
 <script>
+const LRN_MODEL_COLORS = {'NICE3000':'#7F77DD','CMC4':'#4a9eff','CMC3':'#4caf50','20.50':'#FF9800','KONE':'#E91E63','כללי':'#888'};
+
+async function loadLearning() {
+  const list = document.getElementById('learning-list');
+  list.innerHTML = '<div class="loading">טוען...</div>';
+  try {
+    const res = await fetch(`${API}/learning/list`, {
+      headers: { 'Authorization': 'Bearer ' + currentToken },
+    });
+    if (res.status === 401) { doLogout(); return; }
+    const data = await res.json();
+    const items = Array.isArray(data) ? data : (data.items || []);
+    window._learningItems = items;
+
+    if (!items.length) {
+      list.innerHTML = '<div class="loading">אין פריטים עדיין</div>';
+      document.getElementById('lrn-stat-total').textContent = '0';
+      document.getElementById('lrn-stat-models').textContent = '0';
+      document.getElementById('lrn-stat-techs').textContent = '0';
+      return;
+    }
+
+    const models = new Set(items.map(i => i.model).filter(Boolean));
+    const techs  = new Set(items.map(i => i.user_id || i.username).filter(Boolean));
+    document.getElementById('lrn-stat-total').textContent  = items.length;
+    document.getElementById('lrn-stat-models').textContent = models.size;
+    document.getElementById('lrn-stat-techs').textContent  = techs.size;
+
+    const byTech = {};
+    items.forEach(item => {
+      const key  = item.user_id || item.username || 'unknown';
+      const name = item.full_name || item.username || key;
+      if (!byTech[key]) byTech[key] = { name, items: [] };
+      byTech[key].items.push(item);
+    });
+
+    list.innerHTML = Object.entries(byTech).map(([uid, group]) => {
+      const rows = group.items.map(item => {
+        const color = LRN_MODEL_COLORS[item.model] || '#888';
+        const cat   = item.category || '';
+        const hasImg = item.images && item.images.length;
+        return `<div class="fault-row">
+          <span class="fault-badge" style="background:${color}20;color:${color};border-color:${color}40">${esc(item.model || '—')}</span>
+          <span class="fault-row-name" style="flex:1">
+            <span style="font-size:12px;color:#888;margin-left:6px">${esc(cat)}</span>
+            ${esc(item.title || '—')}
+          </span>
+          ${hasImg ? `<span style="font-size:11px;color:#4a9eff">📷 ${item.images.length}</span>` : ''}
+          <span class="fault-row-time">${item.date || ''}</span>
+        </div>`;
+      }).join('');
+
+      return `<div class="tech-group">
+        <div class="tech-group-header" onclick="toggleTechGroup(this)">
+          <span class="tech-group-name">${esc(group.name)}</span>
+          <span class="tech-group-count">${group.items.length} פריטים</span>
+          <span class="tech-group-arrow">▾</span>
+        </div>
+        <div class="tech-group-body">${rows}</div>
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    list.innerHTML = '<div class="loading">שגיאה בטעינה</div>';
+  }
+}
+
 if (location.search.includes('eruda')) {
   const script = document.createElement('script');
   script.src = 'https://cdn.jsdelivr.net/npm/eruda';
