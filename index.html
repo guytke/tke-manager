@@ -1370,5 +1370,13 @@ document.getElementById('login-username').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('login-password').focus();
 });
 </script>
+<script>
+if (location.search.includes('eruda')) {
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/eruda';
+  document.head.appendChild(script);
+  script.onload = () => eruda.init();
+}
+</script>
 </body>
 </html>
