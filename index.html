@@ -696,8 +696,22 @@
 
     <div id="page-params" class="screen">
       <div class="page-title">פרמטרים</div>
+      <div class="fault-stats-row" style="margin-bottom:16px">
+        <div class="fault-stat-card">
+          <div class="fault-stat-value" id="prm-stat-total">—</div>
+          <div class="fault-stat-label">סה"כ פרמטרים</div>
+        </div>
+        <div class="fault-stat-card">
+          <div class="fault-stat-value" id="prm-stat-models">—</div>
+          <div class="fault-stat-label">מודלים</div>
+        </div>
+        <div class="fault-stat-card">
+          <div class="fault-stat-value" id="prm-stat-techs">—</div>
+          <div class="fault-stat-label">טכנאים</div>
+        </div>
+      </div>
       <div class="section-card">
-        <div class="coming-soon">⚙️ מודול פרמטרים — בקרוב</div>
+        <div id="params-list"><div class="loading">טוען...</div></div>
       </div>
     </div>
   </div>
@@ -749,6 +763,31 @@
     <div id="dash-modal-content" style="max-height:60vh;overflow-y:auto"></div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeDashModal()">סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- Param Edit Modal -->
+<div class="modal-overlay" id="param-edit-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title">עריכת פרמטר</div>
+    <div id="param-edit-fields"></div>
+    <div class="error" id="param-edit-error"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeParamEditModal()">ביטול</button>
+      <button class="btn-primary" style="width:auto;margin:0;padding:10px 20px" onclick="saveParam()">שמור</button>
+    </div>
+  </div>
+</div>
+
+<!-- Param Delete Confirm Modal -->
+<div class="modal-overlay" id="param-delete-modal">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div class="modal-title" style="margin-bottom:12px">מחיקת פרמטר</div>
+    <p style="color:#ccc;margin-bottom:24px">האם למחוק פרמטר זה?</p>
+    <div class="modal-actions" style="justify-content:center;gap:12px">
+      <button class="btn-secondary" onclick="closeParamDeleteModal()">ביטול</button>
+      <button class="btn-primary" style="background:#c0392b;width:auto;padding:10px 20px;margin:0" onclick="confirmDeleteParam()">כן, מחק</button>
     </div>
   </div>
 </div>
@@ -987,6 +1026,7 @@ function showPage(name) {
   event.currentTarget.classList.add('active');
   if (name === 'faults') loadFaults();
   if (name === 'learning') loadLearning();
+  if (name === 'params') loadParams();
 }
 
 function modelColor(model) {
@@ -1425,6 +1465,188 @@ document.getElementById('login-username').addEventListener('keydown', e => {
 });
 </script>
 <script>
+// ── Params ───────────────────────────────────────────────
+
+const PRM_MODEL_COLORS = {'NICE3000':'#7F77DD','CMC4':'#4a9eff','CMC3':'#4caf50','20.50':'#FF9800','KONE':'#E91E63'};
+
+function parseParamData(p) {
+  let pd = p.param_data;
+  if (typeof pd === 'string') { try { pd = JSON.parse(pd); } catch { pd = {}; } }
+  return (pd && typeof pd === 'object') ? pd : {};
+}
+
+async function loadParams() {
+  const list = document.getElementById('params-list');
+  list.innerHTML = '<div class="loading">טוען...</div>';
+  try {
+    const res = await fetch(`${API}/params/list`, {
+      headers: { 'Authorization': 'Bearer ' + currentToken },
+    });
+    if (res.status === 401) { doLogout(); return; }
+    const data = await res.json();
+    const params = data.params || [];
+    window._params = params;
+
+    if (!params.length) {
+      list.innerHTML = '<div class="loading">אין פרמטרים עדיין</div>';
+      document.getElementById('prm-stat-total').textContent = '0';
+      document.getElementById('prm-stat-models').textContent = '0';
+      document.getElementById('prm-stat-techs').textContent = '0';
+      return;
+    }
+
+    const models = new Set(params.map(p => parseParamData(p).model).filter(Boolean));
+    const techs  = new Set(params.map(p => p.user_id).filter(Boolean));
+    document.getElementById('prm-stat-total').textContent  = params.length;
+    document.getElementById('prm-stat-models').textContent = models.size;
+    document.getElementById('prm-stat-techs').textContent  = techs.size;
+
+    const byTech = {};
+    params.forEach((p, idx) => {
+      const key  = p.user_id;
+      const name = p.full_name || p.username || key;
+      if (!byTech[key]) byTech[key] = { name, items: [] };
+      byTech[key].items.push({ p, idx });
+    });
+
+    list.innerHTML = Object.entries(byTech).map(([uid, group]) => {
+      const rows = group.items.map(({ p, idx }) => {
+        const pd    = parseParamData(p);
+        const model = pd.model || '';
+        const color = PRM_MODEL_COLORS[model] || '#6b7280';
+        const paramName = pd.param_name || pd.name || '—';
+        const paramNum  = pd.param_number || pd.number || '';
+        const curVal    = pd.current_value !== undefined ? pd.current_value : '';
+        const tarVal    = pd.target_value  !== undefined ? pd.target_value  : '';
+        const date  = p.created_at ? new Date(p.created_at).toLocaleDateString('he-IL') : '';
+        return `<div class="fault-row">
+          <span class="fault-badge" style="background:${color}20;color:${color};border-color:${color}40">${esc(model || '—')}</span>
+          <span class="fault-row-name" style="flex:1">
+            ${paramNum ? `<span style="font-size:11px;color:#888;margin-left:4px">#${esc(paramNum)}</span>` : ''}
+            ${esc(paramName)}
+            ${(curVal !== '' || tarVal !== '') ? `<span style="font-size:11px;color:#aaa;margin-right:6px">${esc(String(curVal))} → ${esc(String(tarVal))}</span>` : ''}
+          </span>
+          <span class="fault-row-time">${date}</span>
+          <button class="fault-delete-btn" style="color:#4a9eff" onclick="openParamEditModal(${idx})" title="ערוך">✎</button>
+          <button class="fault-delete-btn" onclick="openParamDeleteModal(${idx})" title="מחק">✕</button>
+        </div>`;
+      }).join('');
+
+      return `<div class="tech-group">
+        <div class="tech-group-header" onclick="toggleTechGroup(this)">
+          <span class="tech-group-name">${esc(group.name)}</span>
+          <span class="tech-group-count">${group.items.length} פרמטרים</span>
+          <span class="tech-group-arrow">▾</span>
+        </div>
+        <div class="tech-group-body">${rows}</div>
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    list.innerHTML = '<div class="loading">שגיאה בטעינה</div>';
+  }
+}
+
+let _editParamIdx = null;
+
+function openParamEditModal(idx) {
+  _editParamIdx = idx;
+  const p  = window._params[idx];
+  const pd = parseParamData(p);
+  document.getElementById('param-edit-error').textContent = '';
+
+  const fields = [
+    ['model',         'מודל',          pd.model         || ''],
+    ['param_number',  'מספר פרמטר',    pd.param_number  || pd.number || ''],
+    ['param_name',    'שם פרמטר',      pd.param_name    || pd.name   || ''],
+    ['current_value', 'ערך נוכחי',     pd.current_value !== undefined ? pd.current_value : ''],
+    ['target_value',  'ערך מטרה',      pd.target_value  !== undefined ? pd.target_value  : ''],
+    ['note',          'הערה',          pd.note          || ''],
+  ];
+
+  document.getElementById('param-edit-fields').innerHTML = fields.map(([key, label, val]) => `
+    <label>${label}</label>
+    <input type="text" id="pedit-${key}" value="${esc(String(val))}" placeholder="${label}">
+  `).join('');
+
+  document.getElementById('param-edit-modal').classList.add('open');
+}
+
+function closeParamEditModal() {
+  document.getElementById('param-edit-modal').classList.remove('open');
+  _editParamIdx = null;
+}
+
+async function saveParam() {
+  if (_editParamIdx === null) return;
+  const p  = window._params[_editParamIdx];
+  const pd = parseParamData(p);
+
+  const updated = {
+    ...pd,
+    model:         document.getElementById('pedit-model').value.trim(),
+    param_number:  document.getElementById('pedit-param_number').value.trim(),
+    param_name:    document.getElementById('pedit-param_name').value.trim(),
+    current_value: document.getElementById('pedit-current_value').value.trim(),
+    target_value:  document.getElementById('pedit-target_value').value.trim(),
+    note:          document.getElementById('pedit-note').value.trim(),
+  };
+
+  try {
+    const res = await fetch(`${API}/params/update`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + currentToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ param_id: p.id, param_data: updated }),
+    });
+    if (res.status === 401) { doLogout(); return; }
+    const data = await res.json();
+    if (data.ok) {
+      showToast('הפרמטר עודכן');
+      closeParamEditModal();
+      loadParams();
+    } else {
+      document.getElementById('param-edit-error').textContent = data.error || 'שגיאה בשמירה';
+    }
+  } catch {
+    document.getElementById('param-edit-error').textContent = 'שגיאת חיבור';
+  }
+}
+
+let _deleteParamIdx = null;
+
+function openParamDeleteModal(idx) {
+  _deleteParamIdx = idx;
+  document.getElementById('param-delete-modal').classList.add('open');
+}
+
+function closeParamDeleteModal() {
+  document.getElementById('param-delete-modal').classList.remove('open');
+  _deleteParamIdx = null;
+}
+
+async function confirmDeleteParam() {
+  if (_deleteParamIdx === null) return;
+  const p = window._params[_deleteParamIdx];
+  try {
+    const res = await fetch(`${API}/params/delete`, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + currentToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ param_id: p.id }),
+    });
+    if (res.status === 401) { doLogout(); return; }
+    const data = await res.json();
+    if (data.ok) {
+      showToast('הפרמטר נמחק');
+      closeParamDeleteModal();
+      loadParams();
+    } else {
+      showToast('שגיאה: ' + (data.error || 'מחיקה נכשלה'));
+    }
+  } catch {
+    showToast('שגיאת חיבור');
+  }
+}
+
 const LRN_MODEL_COLORS = {'NICE3000':'#7F77DD','CMC4':'#4a9eff','CMC3':'#4caf50','20.50':'#FF9800','KONE':'#E91E63','כללי':'#888'};
 
 async function loadLearning() {
